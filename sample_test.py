@@ -68,6 +68,6 @@ print(z[0])'''
 from sympy.solvers import solve
 import sympy
 a, b, c, x, y,x_distorted, y_distorted, k1, height_center, width_center= sympy.symbols(('a', 'b', 'c', 'x', 'y','x_distorted', 'y_distorted','k1', 'height_center', 'width_center'))
-eq1 = sympy.Eq((x-width_center)*(1+k1*((((x-140)**2)+((y-109)**2))**0.5)**2), x_distorted+width_center)
-eq2 = sympy.Eq((y-height_center)*(1+k1*(((((x-140)**2)+((y-109)**2))**0.5)**2)), y_distorted+height_center)
+eq1 = sympy.Eq((x-width_center)*(1+k1*((((x-140)**2)+((y-109)**2))**0.5)**2), x_distorted-width_center)
+eq2 = sympy.Eq((y-height_center)*(1+k1*(((((x-140)**2)+((y-109)**2))**0.5)**2)), y_distorted-height_center)
 print(sympy.solve([eq1, eq2], [x, y]))

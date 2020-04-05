@@ -18,9 +18,6 @@ k2_value=1e-12
 k3_value=1e-15
 blank_image = np.zeros((height,width), dtype=np.uint8)
 mappings=[]
-'''max_possible_height_center=max_possible_height//2
-max_possible_width_center=max_possible_width//2'''
-#Blank black image which will be used later.
 print(height,width)
 mapping_counter=0
 for height_pixel in range(0,height+1,1):
@@ -31,30 +28,28 @@ for height_pixel in range(0,height+1,1):
         try:
             blank_image[round(y_distorted)+height_center,round(x_distorted)+width_center]=img[height_pixel,width_pixel]
             if height_pixel==0 and width_pixel>=width_center and mapping_counter<=3:
-                mappings+=[[[width_pixel,height_pixel],[x_distorted,y_distorted]]]
+                mappings+=[[[width_pixel,height_pixel],[x_distorted+width_center,y_distorted+height_center]]]
                 mapping_counter+=1
         except:
-            '''print("Distorted Height",round(y_distorted)-2+height_center)
-            print("Distorted Width",round(x_distorted)-2+width_center)
-            print('Height',height)
-            print('Width',width)'''
+            y=1
 #blank_image=cv2.resize(blank_image,(width,height))
 cv2.imwrite("check4.png",blank_image)
 
 def undistortion(blank_image,mappings,k_values,height=218,width=280,height_center=109,width_center=140):
-    def myFunction(z,k_values,x_distorted,y_distorted,width_center,height_center):
+    def myFunction(z,k_values,width_center,height_center,mappings):
         if k_values==1:
             k1=z[0]
             F = np.empty((1))
-            r_value=(((x-140)**2)+((y-109)**2))**0.5
-            F[0] = (mappings[0][1][0])*(1+k1*(r_value**2))-(mappings[0][0][1]-width_center)
+            r_value=(((mappings[0][0][0]-140)**2)+((0-109)**2))**0.5
+            F[0] = (mappings[0][1][0])*(1+k1*(r_value**2))-(mappings[0][0][0])
             return F
         elif k_values==2:
             k1=z[0]
             k2=z[1]
             F=np.empty((2))
-            r_value=(((x-140)**2)+((y-109)**2))**0.5
+            r_value=(((mappings[0][0][0]-140)**2)+((0-109)**2))**0.5
             F[0] = (mappings[0][1][0])*(1+k1*(r_value**2)+k2*(r_value**4))-(mappings[0][0][0]-width_center)
+            r_value=(((mappings[1][0][0]-140)**2)+((0-109)**2))**0.5
             F[1] = (mappings[1][1][0])*(1+k1*(r_value**2)+k2*(r_value**4))-(mappings[1][0][0]-width_center)
             return F
         elif k_values==3:
@@ -62,47 +57,38 @@ def undistortion(blank_image,mappings,k_values,height=218,width=280,height_cente
             k2=z[1]
             k3=z[2]
             F=np.empty((3))
-            r_value=(((x-140)**2)+((y-109)**2))**0.5
-            F[0] = (mappings[0][1][0])*(1+k1*(r_value**2)+k2*(r_value**4)+k3*(r_value**6))-(mappings[0][0][0]-width_center)
-            F[1] = (mappings[1][1][0])*(1+k1*(r_value**2)+k2*(r_value**4)+k3*(r_value**6))-(mappings[1][0][0]-width_center)
+            r_value=(((mappings[0][0][0]-140)**2)+((0-109)**2))**0.5
+            F[0] = (mappings[0][1][0])*(1+k1*(r_value**2)+k2*(r_value**4))-(mappings[0][0][0]-width_center)
+            r_value=(((mappings[1][0][0]-140)**2)+((0-109)**2))**0.5
+            F[1] = (mappings[1][1][0])*(1+k1*(r_value**2)+k2*(r_value**4))-(mappings[1][0][0]-width_center)
+            r_value=(((mappings[2][0][0]-140)**2)+((0-109)**2))**0.5
             F[2] = (mappings[2][1][0])*(1+k1*(r_value**2)+k2*(r_value**4)+k3*(r_value**6))-(mappings[2][0][0]-width_center)
             return F
     if k_values==1:
         zGuess=np.array([1])
-    elif k_values==2:
-        zGuess=np.array([1,1])
-    elif k_values==3:
-        zGuess=np.array([1,1,1])
-    z=fsolve(myFunction,zGuess,args=(k_values,x_distorted,y_distorted,width_center,height_center,mappings))
+    z=fsolve(myFunction,zGuess,args=(k_values,width_center,height_center,mappings))
+    print(z)
+    k1_value=z[0]
     if k_values==1:
-        k1_value=z[0]
         k2_value=0
         k3_value=0
-    if k_values==2:
-        k1_value=z[0]
-        k2_value=z[1]
-        k3_value=0
-    if k_values==3:
-        k1_value=z[0]
-        k2_value=z[1]
-        k3_value=z[2]
     counter=0
     length_counter=0
     blank_image_2=np.zeros((height,width),dtype=np.uint8)
     for height_pixel in range(0,height+1,1):
         for width_pixel in range(0,width+1,1):
             r_value=(((width_pixel-width_center)**2)+((height_pixel-height_center)**2))**0.5
-            x_distorted=(width_pixel-width_center)*(1+k1_value*(r_value**2)+k2_value*(r_value**4)+k3_value*(r_value**6))
-            y_distorted=(height_pixel-height_center)*(1+k1_value*(r_value**2)+k2_value*(r_value**4)+k3_value*(r_value**6))
+            x_corrected=(width_pixel-width_center)*(1+k1_value*(r_value**2)+k2_value*(r_value**4)+k3_value*(r_value**6))
+            y_corrected=(height_pixel-height_center)*(1+k1_value*(r_value**2)+k2_value*(r_value**4)+k3_value*(r_value**6))
             try:
-                blank_image_2[int(round(z[1])),int(round(z[0]))]=blank_image[height_pixel,width_pixel]
+                blank_image_2[int(y_corrected)+height_center,int(x_corrected)+width_center]=blank_image[height_pixel,width_pixel]
                 counter+=1
             except:
                 y=1
             length_counter+=1
-    cv2.imwrite('undistortion_results'+'k_values_considered_'+str(k_values)+'.png',blank_image_2)
+    cv2.imwrite('undistortion_results/'+'k_values_considered_'+str(k_values)+'.png',blank_image_2)
     print(counter/length_counter)
     return True
 
 #Undistortion for solely k1:
-blank_image_k1=undistortion(
+blank_image_k1=undistortion(blank_image,mappings,1)
