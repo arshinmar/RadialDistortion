@@ -7,6 +7,7 @@ import matplotlib.image as mpimg
 import glob
 from scipy.optimize import fsolve
 import math
+from random import randrange
 
 def distort_image(img,k1,k2,k3):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -17,6 +18,7 @@ def distort_image(img,k1,k2,k3):
     mappings=[]
     print(height,width)
     mapping_counter=0
+    mapping_counter=0
     for y_pixel in range(0,height,1):
         for x_pixel in range(0,width,1):
             r_value=(((x_pixel-x_center)**2)+((y_pixel-y_center)**2))**0.5
@@ -24,13 +26,13 @@ def distort_image(img,k1,k2,k3):
             y_distorted=int((y_pixel-y_center)*(1+k1*(r_value**2)+k2*(r_value**4)+k3*(r_value**6)))
             try:
                 image[y_distorted+y_center,x_distorted+x_center]=img[y_pixel,x_pixel]
-                if x_pixel==0 and mapping_counter<=3:
+                if ((x_pixel==x_center//2) and (y_pixel==y_center-108 or y_pixel==y_center or y_pixel==y_center+108)) and mapping_counter<3:
                     #Just wanted 3 mappings.
                     mappings+=[[[x_pixel-x_center,y_pixel-y_center],[x_distorted,y_distorted]]]
                     mapping_counter+=1
             except:
                 y=1
-    cv2.imwrite("check4.png",image)
+    cv2.imwrite('distortion_results/'+str(k1)+'+'+str(k2)+'+'+str(k3)+'.png',image)
     return image,mappings
 
 def solve_for_k(k_values,mappings):
@@ -52,16 +54,16 @@ def solve_for_k(k_values,mappings):
         r2=math.sqrt((xd2-xc)**2+(yd2-yc)**2)
         if k_values==1:
             F=np.empty((1))
-            F[0]=(yd)*(1+k[0]*r**2)-y
+            F[0]=(yd)*(1+k[0]*r**2)-(y-yd)
         elif k_values==2:
             F=np.empty((2))
-            F[0]=(yd)*(1+k[0]*r**2+k[1]*r**4)-y
-            F[1]=(yd1)*(1+k[0]*r1**2+k[1]*r1**4)-y1
+            F[0]=(yd)*(1+k[0]*r**2+k[1]*r**4)-(y-yd)
+            F[1]=(yd1)*(1+k[0]*r1**2+k[1]*r1**4)-(y1-yd1)
         else:
             F=np.empty((3))
-            F[0]=(yd)*(1+k[0]*r**2+k[1]*r**4+k[2]*r**6)-y
-            F[1]=(yd1)*(1+k[0]*r1**2+k[1]*r1**4+k[2]*r1**6)-y1
-            F[2]=(yd2)*(1+k[0]*r2**2+k[1]*r2**4+k[2]*r2**6)-y2
+            F[0]=(yd)*(1+k[0]*r**2+k[1]*r**4+k[2]*r**6)-(y-yd1)
+            F[1]=(yd1)*(1+k[0]*r1**2+k[1]*r1**4+k[2]*r1**6)-(y1-yd1)
+            F[2]=(yd2)*(1+k[0]*r2**2+k[1]*r2**4+k[2]*r2**6)-(y2-yd2)
         return F
     k=fsolve(undistort_y,x0,args=(data))
     return k
@@ -83,10 +85,29 @@ def undistort_image(image,k):
             x_corrected=(x_pixel-x_center)*(1+k[0]*(r_value**2))
             y_corrected=(y_pixel-y_center)*(1+k[0]*(r_value**2))
             try:
-                blank_image_2[int(y_corrected)+y_center,int(x_corrected)+x_center]=image[y_pixel,x_pixel]
+                blank_image_2[int(y_corrected)+y_pixel,int(x_corrected)+x_pixel]=image[y_pixel,x_pixel]
                 counter+=1
             except:
                 y=1
             length_counter+=1
     cv2.imwrite('undistortion_results/'+'k_values_considered_'+str(k[0])+'+'+str(k[1])+'+'+str(k[2])+'.png',blank_image_2)
     return blank_image_2,counter/length_counter
+
+def iterate_for_best_version(image,k1,k2,k3):
+    image2=image
+    max=0
+    max_mappings=[]
+    for i in range(0,5,1):
+        image,mappings=distort_image(image2,k1,k2,k3)
+        k=solve_for_k(3,mappings)
+        print(k)
+        blank_image_2,ratio=undistort_image(image,k)
+        if ratio>max:
+            max=ratio
+            k_values_chosen=k
+            max_mappings=mappings
+    print(max_mappings)
+    blank_image_2,ratio=undistort_image(image,k)
+    print(ratio)
+    cv2.imwrite('undistortion_results/'+'k_values_considered_'+str(k[0])+'+'+str(k[1])+'+'+str(k[2])+'.png',blank_image_2)
+    return True
