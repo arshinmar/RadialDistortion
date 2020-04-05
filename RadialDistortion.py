@@ -10,7 +10,6 @@ import math
 
 img=cv2.imread('distorted-checker-board.png')
 img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-print(img.shape)
 height,width=img.shape[:2]
 width_center=width//2
 height_center=height//2
@@ -47,7 +46,7 @@ x0=1
 def undistort_y(k,*data):
     x,y,xd,yd,xc,yc=data
     r=math.sqrt((xd-xc)**2+(yd-yc)**2)
-    return (yd)*(1*k*r**2)-(y-yc)
+    return (yd)*(1*k*r**2)-(y)
 k=fsolve(undistort_y,x0,args=data)
 print(k)
 counter=0
