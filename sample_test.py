@@ -48,7 +48,7 @@ print(end-start)'''
 
 from scipy.optimize import fsolve
 
-x_distorted=140
+x_distorted=200
 y_distorted=109
 
 def myFunction(z,x_distorted_y_distorted):
@@ -62,8 +62,5 @@ def myFunction(z,x_distorted_y_distorted):
    return F
 
 zGuess = np.array([1,1])
-start=time.time()
 z = fsolve(myFunction,zGuess,args=(y_distorted))
-end=time.time()
-print(end-start)
-print(z)
+print(z[0])
