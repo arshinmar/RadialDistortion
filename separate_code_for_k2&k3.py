@@ -21,3 +21,19 @@ elif k_values==3:
     F[2] = (mappings[2][1][0])*(1+k1*(r_value**2)+k2*(r_value**4)+k3*(r_value**6))-(mappings[2][0][0]-width_center)
     return F
 '''
+
+'''
+    elif k_values==2:
+        zGuess=np.array([1,1])
+    elif k_values==3:
+        zGuess=np.array([1,1,1])
+'''
+
+'''
+    if k_values==2:
+        k2_value=z[1]
+        k3_value=0
+    if k_values==3:
+        k2_value=z[1]
+        k3_value=z[2]
+'''
